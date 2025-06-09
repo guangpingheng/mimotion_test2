@@ -38,8 +38,8 @@ def get_min_max_by_time(hour=None, minute=None):
     if minute is None:
         minute = time_bj.minute
     time_rate = min((hour * 60 + minute) / (22 * 60), 1)
-    min_step = get_int_value_default(config, 'MIN_STEP', 18000)
-    max_step = get_int_value_default(config, 'MAX_STEP', 25000)
+    min_step = get_int_value_default(config, 'MIN_STEP', 11000)
+    max_step = get_int_value_default(config, 'MAX_STEP', 18000)
     return int(time_rate * min_step), int(time_rate * max_step)
 
 
@@ -70,45 +70,50 @@ def get_access_token(location):
     if result is None or len(result) == 0:
         return None
     return result[0]
-    
+  
 # 推送新 server 酱
-def push_server(_sckey, desp=""):
-    if _sckey == '':
+def push_server(title, content="",result_info="推送成功"):
+    if PUSH_SERVER_TOKEN == '':
         print("[注意] 未提供sckey，不进行微信推送！")
     else:
         server_url = f"https://sctapi.ftqq.com/{PUSH_SERVER_TOKEN}.send"
-        params = {
-            "title": '小米运动 步数修改',
-            "desp": desp
+        data = {
+            "title": f"{title}",
+            "desp": content,
+            "short": f"{format_now()}, {result_info}"
         }
+        try:
+             response = requests.post(server_url,headers={"Content-Type": "Content-Type: application/json;charset=utf-8"}, json=data)
+             json_data = response.json()
 
-        response = requests.get(server_url, params=params)
-        json_data = response.json()
+             if json_data['code'] == 0:
+                print(f"[{format_now()}] 推送成功。")
+             else:
+                print(f"[{format_now()}] 推送失败：{json_data['code']}({json_data['message']})")
 
-        if json_data['code'] == 0:
-            print(f"[{now}] 推送成功。")
-        else:
-            print(f"[{now}] 推送失败：{json_data['code']}({json_data['message']})")
+        except Exception as e:
+            print(f"[{format_now()}] 推送失败：{e}")
+            return    
 
 # pushplus消息推送
-def push_plus(title, content):
-    requestUrl = f"http://www.pushplus.plus/send"
-    data = {
-        "token": PUSH_PLUS_TOKEN,
-        "title": title,
-        "content": content,
-        "template": "html",
-        "channel": "wechat"
-    }
-    try:
-        response = requests.post(requestUrl, data=data)
-        if response.status_code == 200:
-            json_res = response.json()
-            print(f"pushplus推送完毕：{json_res['code']}-{json_res['msg']}")
-        else:
-            print("pushplus推送失败")
-    except:
-        print("pushplus推送异常")
+# def push_plus(title, content):
+#     requestUrl = f"http://www.pushplus.plus/send"
+#     data = {
+#         "token": PUSH_PLUS_TOKEN,
+#         "title": title,
+#         "content": content,
+#         "template": "html",
+#         "channel": "wechat"
+#     }   
+#     try:
+#         response = requests.post(requestUrl, data=data)
+#         if response.status_code == 200:
+#             json_res = response.json()
+#             print(f"pushplus推送完毕：{json_res['code']}-{json_res['msg']}")
+#         else:
+#             print("pushplus推送失败")
+#     except:
+#         print("pushplus推送异常")
 
 
 class MiMotionRunner:
@@ -251,9 +256,9 @@ class MiMotionRunner:
 
 
 # 启动主函数
-def push_to_push_plus(exec_results, summary):
+def push_to_server(exec_results, summary):
     # 判断是否需要pushplus推送
-    if PUSH_PLUS_TOKEN is not None and PUSH_PLUS_TOKEN != '' and PUSH_PLUS_TOKEN != 'NO':
+    if PUSH_SERVER_TOKEN is not None and PUSH_SERVER_TOKEN != '' and PUSH_SERVER_TOKEN != 'NO':
         if PUSH_PLUS_HOUR is not None and PUSH_PLUS_HOUR.isdigit():
             if time_bj.hour != int(PUSH_PLUS_HOUR):
                 print(f"当前设置push_plus推送整点为：{PUSH_PLUS_HOUR}, 当前整点为：{time_bj.hour}，跳过推送")
@@ -270,7 +275,7 @@ def push_to_push_plus(exec_results, summary):
                 else:
                     html += f'<li><span>账号：{exec_result["user"]}</span>刷步数失败，失败原因：{exec_result["msg"]}</li>'
             html += '</ul>'
-        push_plus(f"{format_now()} 刷步数通知", html)
+        push_server(f"{format_now()} 刷步数通知", html)
 
 
 def run_single_account(total, idx, user_mi, passwd_mi):
@@ -320,7 +325,7 @@ def execute():
                 success_count += 1
         summary = f"\n执行账号总数{total}，成功：{success_count}，失败：{total - success_count}"
         print(summary)
-        push_to_push_plus(push_results, summary)
+        push_to_server(push_results, summary)
     else:
         print(f"账号数长度[{len(user_list)}]和密码数长度[{len(passwd_list)}]不匹配，跳过执行")
         exit(1)
@@ -342,7 +347,7 @@ if __name__ == "__main__":
             traceback.print_exc()
             exit(1)
         
-        PUSH_PLUS_TOKEN = config.get('PUSH_PLUS_TOKEN')
+        PUSH_SERVER_TOKEN = config.get('PUSH_SERVER_TOKEN')
         PUSH_PLUS_HOUR = config.get('PUSH_PLUS_HOUR')
         PUSH_PLUS_MAX = get_int_value_default(config, 'PUSH_PLUS_MAX', 30)
         sleep_seconds = config.get('SLEEP_GAP')
