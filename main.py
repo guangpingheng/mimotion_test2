@@ -70,7 +70,25 @@ def get_access_token(location):
     if result is None or len(result) == 0:
         return None
     return result[0]
+    
+# 推送新 server 酱
+def push_server(_sckey, desp=""):
+    if _sckey == '':
+        print("[注意] 未提供sckey，不进行微信推送！")
+    else:
+        server_url = f"https://sctapi.ftqq.com/{PUSH_SERVER_TOKEN}.send"
+        params = {
+            "title": '小米运动 步数修改',
+            "desp": desp
+        }
 
+        response = requests.get(server_url, params=params)
+        json_data = response.json()
+
+        if json_data['code'] == 0:
+            print(f"[{now}] 推送成功。")
+        else:
+            print(f"[{now}] 推送失败：{json_data['code']}({json_data['message']})")
 
 # pushplus消息推送
 def push_plus(title, content):
@@ -323,6 +341,7 @@ if __name__ == "__main__":
             print("CONFIG格式不正确，请检查Secret配置，请严格按照JSON格式：使用双引号包裹字段和值，逗号不能多也不能少")
             traceback.print_exc()
             exit(1)
+        
         PUSH_PLUS_TOKEN = config.get('PUSH_PLUS_TOKEN')
         PUSH_PLUS_HOUR = config.get('PUSH_PLUS_HOUR')
         PUSH_PLUS_MAX = get_int_value_default(config, 'PUSH_PLUS_MAX', 30)
