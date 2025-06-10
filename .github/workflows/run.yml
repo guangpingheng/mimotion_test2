@@ -2,7 +2,7 @@ name: 刷步数
 
 on:
   schedule:
-    - cron: '16 0,2,4,6,8 * * *'
+    - cron: "16 0,1 * * *"
   workflow_dispatch:
 
 jobs:
@@ -16,15 +16,15 @@ jobs:
         run: |
           sudo -E apt-get -qq update
           sudo -E apt-get install zsh -y
-          
+
       - name: 初始化Python
         uses: actions/setup-python@v3
         with:
           python-version: 3.8
-          
+
       - name: 开始
         env:
-            CONFIG: ${{ secrets.CONFIG }}
+          CONFIG: ${{ secrets.CONFIG }}
         run: |
           pip3 install requests pytz
           python3 main.py

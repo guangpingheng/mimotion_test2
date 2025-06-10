@@ -95,11 +95,14 @@ function persist_execute_log {
     sed_prefix=(sed -i '')
   fi
   current_cron=$(< .github/workflows/run.yml grep cron|awk '{print substr($0, index($0,$3))}')
+  # 小时不改了
+  fix_hours=current_cron
   cron_hours=$(inspect_hours "$current_cron")
   if test -n "$new_cron_hours"; then
     cron_hours=$(hours_except_now "$new_cron_hours")
   fi
-  "${sed_prefix[@]}" -E "s/(- cron: ')[0-9]+( [^[:space:]]+ \* \* \*')/\1$((RANDOM % 59)) ${cron_hours} * * *'/g" .github/workflows/run.yml
+  # "${sed_prefix[@]}" -E "s/(- cron: ')[0-9]+( [^[:space:]]+ \* \* \*')/\1$((RANDOM % 59)) ${cron_hours} * * *'/g" .github/workflows/run.yml
+  "${sed_prefix[@]}" -E "s/(- cron: ')[0-9]+( [^[:space:]]+ \* \* \*')/\1$((RANDOM % 59)) ${fix_hours} * * *'/g" .github/workflows/run.yml
   current_cron=$(< .github/workflows/run.yml grep cron|awk '{print substr($0, index($0,$3))}')
   {
     echo "next cron:"

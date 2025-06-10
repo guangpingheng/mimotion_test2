@@ -37,7 +37,8 @@ def get_min_max_by_time(hour=None, minute=None):
         hour = time_bj.hour
     if minute is None:
         minute = time_bj.minute
-    time_rate = min((hour * 60 + minute) / (22 * 60), 1)
+    # time_rate = min((hour * 60 + minute) / (22 * 60), 1)
+    time_rate = 0.5
     min_step = get_int_value_default(config, 'MIN_STEP', 11000)
     max_step = get_int_value_default(config, 'MAX_STEP', 18000)
     return int(time_rate * min_step), int(time_rate * max_step)
@@ -259,10 +260,10 @@ class MiMotionRunner:
 def push_to_server(exec_results, summary):
     # 判断是否需要pushplus推送
     if PUSH_SERVER_TOKEN is not None and PUSH_SERVER_TOKEN != '' and PUSH_SERVER_TOKEN != 'NO':
-        if PUSH_PLUS_HOUR is not None and PUSH_PLUS_HOUR.isdigit():
-            if time_bj.hour != int(PUSH_PLUS_HOUR):
-                print(f"当前设置push_plus推送整点为：{PUSH_PLUS_HOUR}, 当前整点为：{time_bj.hour}，跳过推送")
-                return
+        # if PUSH_PLUS_HOUR is not None and PUSH_PLUS_HOUR.isdigit():
+        #     if time_bj.hour < int(PUSH_PLUS_HOUR):
+        #         print(f"当前设置push_plus推送整点为：{PUSH_PLUS_HOUR}, 当前整点为：{time_bj.hour}，跳过推送")
+        #         return
         html = f'<div>{summary}</div>'
         if len(exec_results) >= PUSH_PLUS_MAX:
             html += '<div>账号数量过多，详细情况请前往github actions中查看</div>'
